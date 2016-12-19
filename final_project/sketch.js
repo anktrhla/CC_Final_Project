@@ -7,11 +7,13 @@ var lifeP;
 var count = 0;
 var nest;
 var nestTarget;
-var obsx = 300;
+var obsX = 300;
 var obsY = 300;
 var obsW = 300;
 var obsH = 20;
 var maxForce = 0.2;
+var canWidth = 1000;
+var canHeight = 600;
 
 
 //preload function to load images into the sketch in async fashion
@@ -20,11 +22,11 @@ function preload() {
 	bird = loadImage("assets/bird.png"); //bird image
 	nest = loadImage("assets/nest.png"); //nest image
 	//create a 2D vector, to initialize x and y values for the nest
-	nestTarget = createVector(width/2, 50);
+	nestTarget = createVector(canHeight/2, 100);
 }
 
 function setup() {
-  createCanvas (1000, 600); //create canvas
+  createCanvas (canWidth, canHeight); //create canvas
   	birds = new Birds(); //initializing the Birds function into an object
   	population = new Population(); //initializing the Population function into an object
   	lifeP = createP(); //creating a paragraph element
@@ -33,10 +35,12 @@ function setup() {
 function draw() {
 
 	//set bg color
-	background(0);
+	background(109, 138, 255);
 	//initializing the nest where the birds have to reach; the target!
-	image(nest, nestTarget.x, nestTarget.y, 100, 50);
+	image(nest, nestTarget.x, nestTarget.y, 50, 25);
 	//initialize the population of birds
+	fill(102, 65, 5);
+    rect(obsX, obsY, obsW, obsH);
     population.run();
     //calling the paragraph element to display the count value
     lifeP.html(count);
@@ -49,8 +53,6 @@ function draw() {
     	count = 0;
     }
 
-    fill(102, 65, 5);
-    rect(obsX, obsY, obsW, obsH);
 
 }
 
@@ -105,7 +107,7 @@ function Population() {
 		this.birds = newBirds;
 	}
 	this.run = function() {
-		for (var i =0; i < this.popsize; i++) {
+		for (var i = 0; i < this.popsize; i++) {
 			this.birds[i].update();
 			this.birds[i].show();
 		}
@@ -159,8 +161,13 @@ function DNA(genes) {
 //on the basis of information recieved by the DNA function and the population
 //function and then uses a basic physics engine schematic that uses vectors
 //to allow them to be displayed in the sketch
-
+}
 function Birds(dna) {
+
+	var obsX = 300;
+	var obsY = 300;
+	var obsW = 300;
+	var obsH = 20;
 
 	this.position = createVector(width/2, height);
 	this.velocity = createVector();
@@ -181,7 +188,7 @@ function Birds(dna) {
 	}
 
 	this.calcFitness = function() {
-		var d = dist(this.pos.x, this.pos.y, nestTarget.x, nestTarget.y);
+		var d = dist(this.position.x, this.position.y, nestTarget.x, nestTarget.y);
 		this.fitness = map(d, 0, width, width, 0);
 		if (this.reached) {
 			this.fitness *= 10;
@@ -192,22 +199,22 @@ function Birds(dna) {
 	}
 
 	this.update = function() {
-		var d = dist(this.pos.x, this.pos.y, nestTarget.x, nestTarget.y);
+		var d = dist(this.position.x, this.position.y, nestTarget.x, nestTarget.y);
 		if (d < 10){
 			this.reached = true;
-			this.pos = nestTarget.copy();
+			this.position = nestTarget.copy();
 		}
 
-		if (this.pos.x > obsX && this.pos.x < obsX + obsW && this.pos.y > obsY && this.pos.y < obsY + obsH) {
+		if (this.position.x > this.obsX && this.position.x < this.obsX + this.obsW && this.position.y > this.obsY && this.position.y < this.obsY + this.obsH) {
 
 			this.dead = true;
 		}
 
-		if (this.pos.x > width || this.pos.x < 0) {
+		if (this.position.x > width || this.position.x < 0) {
 			this.dead = true;
 		}
 
-		if (this.pos.y > height || this.pos.y < 0) {
+		if (this.position.y > height || this.position.y < 0) {
 			this.dead = true;
 		}
 
@@ -232,5 +239,4 @@ function Birds(dna) {
 		pop();
 		pop();
 	}
-}
 }
