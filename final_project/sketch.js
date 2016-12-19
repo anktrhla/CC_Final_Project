@@ -5,61 +5,56 @@
 //have to take to reach their nest.
 
 //global variables
-var bird;
-var birds;
 var population;
-var lifespan = 400;
+var lifespan = 500;
 var lifeP;
 var count = 0;
-var nest;
 var nestTarget;
-var obsX = 300;
-var obsY = 300;
-var obsW = 300;
-var obsH = 20;
-var maxForce = 0.2;
-var canWidth = 1000;
-var canHeight = 600;
+var maxforce = 0.4;
+var nest;
+var birdie;
 
+var rx = 350;
+var ry = 300;
+var rw = 300;
+var rh = 20;
 
 //preload function to load images into the sketch in async fashion
 function preload() {
-
-	bird = loadImage("assets/bird.png"); //bird image
-	nest = loadImage("assets/nest.png"); //nest image
-	//create a 2D vector, to initialize x and y values for the nest
-	nestTarget = createVector(canHeight/2, 100);
+  nest = loadImage("assets/nest.png");
+  birdie = loadImage("assets/bird.png");
 }
 
 function setup() {
-  createCanvas (canWidth, canHeight); //create canvas
-  	birds = new Birds(); //initializing the Birds function into an object
-  	population = new Population(); //initializing the Population function into an object
-  	lifeP = createP(); //creating a paragraph element
+  createCanvas(1000, 600); //create canvas
+  bird = new Bird();  //initializing the Bird function into an object
+  population = new Population(); //initializing the Population function into an object
+  lifeP = createP(); //creating a paragraph element
+  //create a 2D vector, to initialize x and y values for the nest
+  nestTarget = createVector(width/2, 50);
+
 }
 
 function draw() {
+  //set background color
+  background(109, 138, 255);
+  //initialize the population of birds
+  population.run();
+  //calling the paragraph element to display the count value
+  lifeP.html(count);
+  count++;
+  //reset the count to 0; generate a new population that has a higher fitness rate
+  if (count == lifespan) {
+    population.evaluate();
+    population.selection();
+    count = 0;
+  }
 
-	//set bg color
-	background(109, 138, 255);
-	//initializing the nest where the birds have to reach; the target!
-	image(nest, nestTarget.x, nestTarget.y, 50, 25);
-	//initialize the population of birds
-	fill(102, 65, 5);
-    rect(obsX, obsY, obsW, obsH);
-    population.run();
-    //calling the paragraph element to display the count value
-    lifeP.html(count);
-    count++;
-
-    //reset the count to 0; generate a new population that has a higher fitness rate
-    if (count == lifespan) {
-    	population.evaluate();
-    	population.selection();
-    	count = 0;
-    }
-
-
+  fill(102, 65, 5);
+  rect(rx, ry, rw, rh);
+  //initializing the nest where the birds have to reach; the target!
+  imageMode(CENTER);
+  image(nest, nestTarget.x, nestTarget.y, 50, 25);
 }
 
 //---POPULATION CLASS---
@@ -69,56 +64,62 @@ function draw() {
 //lifespan after lifespan.
 
 function Population() {
+  this.birds = [];
+  this.popsize = 25;
+  this.matingpool = [];
 
-	this.birds = [];
-	this.popsize = 25;
-	this.matingPool = [];
+  for (var i = 0; i < this.popsize; i++) {
+    this.birds[i] = new Bird();
+  }
 
-	for (var i =0; i < this.popsize; i++) {
-		this.birds[i] = new Birds();
-		}
+//evaluate function. this function evaluates the fitness value of each phenotype and places them in a mating pool.
+//higher the fitness rate, higher the chances of that bird to make it to the nest.
 
-	this.evaluate = function() {
+  this.evaluate = function() {
 
-			var maxfit = 0;
-			for (var i =0; i < this.popsize; i++) {
-				this.birds[i].calcFitness();
-				if ( this.birds[i].fitness > maxfit) {
-					maxfit = this.birds[i].fitness;
-				}
-			}
-			console.log(this.birds);;
+    var maxfit = 0;
+    for (var i = 0; i < this.popsize; i++) {
+      this.birds[i].calcFitness();
+      if (this.birds[i].fitness > maxfit) {
+        maxfit = this.birds[i].fitness;
+      }
+    }
+    for (var i = 0; i < this.popsize; i++) {
+      this.birds[i].fitness /= maxfit;
+    }
 
-			for (var i =0; i < this.popsize; i++) {
-				this.birds[i].fitness /= maxfit;
-			}
+    this.matingpool = [];
+    for (var i = 0; i < this.popsize; i++) {
+      var n = this.birds[i].fitness * 100;
+      for (var j = 0; j < n; j++) {
+        this.matingpool.push(this.birds[i]);
+      }
+    }
+  }
+  
+  //selection function. this function selects on the basis of the availability of the mating pool, which genes have higher 
+  //fitness rate values, and selects them to produce a new bird when a new generation is spawned
 
-			this.matingPool = [];
-			for (var i =0; i < this.popsize; i++) {
-				var n = this.birds[i].fitness * 100;
-				for (var j = 0; j < n; j++){
-					this.matingPool.push(this.birds[i]);
-				}
-			}
-	}
-	this.selection = function() {
-		var newBirds = [];
-		for (var i = 0; i < birds.length; i++) {
-		var parentA = random(this.matingPool).dna;
-		var parentB = random(this.matingPool).dna;
-		var child = parentA.crossover(parentB);
-		child.mutation();
-		newBirds[i] = new Birds(child);
-		}
+  this.selection = function() {
+    var newBirds = [];
+    for (var i = 0; i < this.birds.length; i++) {
+      var parentA = random(this.matingpool).dna;
+      var parentB = random(this.matingpool).dna;
+      var child = parentA.crossover(parentB);
+      child.mutation();
+      newBirds[i] = new Bird(child);
+    }
+    this.birds = newBirds;
+  }
+  
+  //run function updates and shows the bird population on the canvas
 
-		this.birds = newBirds;
-	}
-	this.run = function() {
-		for (var i = 0; i < this.popsize; i++) {
-			this.birds[i].update();
-			this.birds[i].show();
-		}
-	}
+  this.run = function() {
+    for (var i = 0; i < this.popsize; i++) {
+      this.birds[i].update();
+      this.birds[i].show();
+    }
+  }
 }
 
 //---DNA CLASS---
@@ -127,124 +128,138 @@ function Population() {
 //or mutation for the phenotypes to be produced
 
 function DNA(genes) {
-	if (genes) {
-		this.genes = genes;
-	} else {
-	this.genes = []; //initialize the genes array
-	for (var i = 0; i < lifespan; i++) {
-		this.genes[i] = p5.Vector.random2D();
-		this.genes[i].setMag(maxForce); 
-	}
-	}
+  if (genes) {
+    this.genes = genes;
+  } else {
+    this.genes = [];
+    for (var i = 0; i < lifespan; i++) {
+      this.genes[i] = p5.Vector.random2D();
+      this.genes[i].setMag(maxforce);
+    }
+  }
 
-	this.crossover = function (partner) {
-		var newGenes = [];
-		var midPoint = floor(random(this.genes.length));
-		for (var i =0; i< this.genes.length; i++){
-			if (i> midPoint) {
-				newGenes[i] = this.genes[i];
-			} else {
-				newGenes[i] = partner.genes[i];
-			}
-		}
-		return new DNA(newGenes);
-	}
+//crossover function that details that what genes from which parent crosses over to produce a child. 
+//the genes array is split from the mid point; which in turn is chosen randomly
 
-	this.mutation = function() {
+  this.crossover = function(partner) {
+    var newgenes = [];
+    var mid = floor(random(this.genes.length));
+    for (var i = 0; i < this.genes.length; i++) {
+      if (i > mid) {
+        newgenes[i] = this.genes[i];
+      } else {
+        newgenes[i] = partner.genes[i];
+      }
+    }
+    return new DNA(newgenes);
+  }
+  
+  //mutation function. this function sets a 1% mutation rate for the genes to develop over time by taking 
+  //genetic information from the parents' genes
 
-		for (var i=0; i < this.genes.length; i++) {
+  this.mutation = function() {
+    for (var i = 0; i < this.genes.length; i++) {
+      if (random(1) < 0.01) {
+        this.genes[i] = p5.Vector.random2D();
+        this.genes[i].setMag(maxforce);
+      }
+    }
+  }
 
-			if(random(1) < 0.01) {
-				this.genes[i] = p5.Vector.random2D();
-				this.genes[i] = setMag(maxForce);
-			}
-		}
-	}
 }
-//---BIRDS CLASS---
+
+//---BIRD CLASS---
 //this class is responsible for spawning new generations of birds
 //on the basis of information recieved by the DNA function and the population
 //class and then uses a basic physics engine schematic that uses vectors
 //to allow them to be displayed in the sketch
-function Birds(dna) {
 
-	var obsX = 300;
-	var obsY = 300;
-	var obsW = 300;
-	var obsH = 20;
+function Bird(dna) {
+  this.pos = createVector(width / 2, height);
+  this.vel = createVector();
+  this.acc = createVector();
+  this.reached = false;
+  this.dead = false;
+  
+  //If there is dna information already availabl in the array, then keep it, if not create a new instance of DNA
 
-	this.position = createVector(width/2, height);
-	this.velocity = createVector();
-	this.acceleration = createVector();
-	this.reached = false;
-	this.dead = false;
-	if (dna) {
-		this.dna = dna;
-	} else {
-	this.dna = new DNA();
-	}
+  if (dna) {
+    this.dna = dna;
+  } else {
+    this.dna = new DNA();
+  }
+  
+  //set fitness score to zero
+  this.fitness = 0;
 
-	this.fitness = 0;
+  this.applyForce = function(force) {
+    this.acc.add(force);
+  }
 
-	this.applyForce = function(force) {
+//calculating fitness. if the bird reaches the nest, increase the fitness value, if the bird dies elsewhere
+//decrease the fitness value.
 
-		this.acceleration.add(force);
-	}
+  this.calcFitness = function() {
+    var d = dist(this.pos.x, this.pos.y, nestTarget.x, nestTarget.y);
 
-	this.calcFitness = function() {
-		var d = dist(this.position.x, this.position.y, nestTarget.x, nestTarget.y);
-		this.fitness = map(d, 0, width, width, 0);
-		if (this.reached) {
-			this.fitness *= 10;
-		}
-		if (this.dead) {
-			this.fitness /= 10;
-		}
-	}
+    this.fitness = map(d, 0, width, width, 0);
+    if (this.reached) {
+      this.fitness *= 10;
+    }
+    if (this.dead) {
+      this.fitness /= 10;
+    }
 
-	this.update = function() {
+  }
 
-		//code to check if the birds hit the obstacle, if they hit the obstacle, they die.
-		var d = dist(this.position.x, this.position.y, nestTarget.x, nestTarget.y);
-		if (d < 10){
-			this.reached = true;
-			this.position = nestTarget.copy();
-		}
+  this.update = function() {
 
-		if (this.position.x > this.obsX && this.position.x < this.obsX + this.obsW && this.position.y > this.obsY && this.position.y < this.obsY + this.obsH) {
+    var d = dist(this.pos.x, this.pos.y, nestTarget.x, nestTarget.y);
+    
+  //placing IF statements for the birds to stop moving when they have reached the target
+    if (d < 10) {
+      this.reached = true;
+      this.pos = nestTarget.copy();
+    }
+    
+  //placing IF statements so that the birds do not go out of the canvas boundaries, if they hit the boundary, they die.
 
-			this.dead = true;
-		}
+    if (this.pos.x > rx && this.pos.x < rx + rw && this.pos.y > ry && this.pos.y < ry + rh) {
+      this.dead = true;
+    }
 
-		//placing IF statements so that the birds do not go out of the canvas boundaries, if they hit the boundary, they die.
+    if (this.pos.x > width || this.pos.x < 0) {
+      this.dead = true;
+    }
+    if (this.pos.y > height || this.pos.y < 0) {
+      this.dead = true;
+    }
 
-		if (this.position.x > width || this.position.x < 0) {
-			this.dead = true;
-		}
+//basic force values for the birds to move around the canvas
 
-		if (this.position.y > height || this.position.y < 0) {
-			this.dead = true;
-		}
+    this.applyForce(this.dna.genes[count]);
+    if (!this.reached && !this.dead) {
+      this.vel.add(this.acc);
+      this.pos.add(this.vel);
+      this.acc.mult(0);
+      this.vel.limit(4);
+    }
+  }
 
-		this.applyForce(this.dna.genes[count]);
-		if (!this.reached && !this.dead) {
-		this.velocity.add(this.acceleration);
-		this.position.add(this.velocity);
-		this.acceleration.mult(0);
-		this.velocity.limit(4);
-		}
-	}
+//function to display the bird
 
-	this.show = function() {
+  this.show = function() {
+    push();
+    noStroke();
+    fill(255, 150);
+    translate(this.pos.x, this.pos.y);
+    rotate(this.vel.heading());
+    imageMode(CENTER);
+    push();
+    rotate(20);
+    image(birdie, 0, 0, 30, 15);
+    pop();
+    pop();
+  }
 
-		push();
-		translate(this.position.x, this.position.y);
-		rotate(this.velocity.heading());
-		imageMode(CENTER);
-		push();
-		rotate(20);
-		image(bird, 0, 0, 30, 15);
-		pop();
-		pop();
-	}
 }
