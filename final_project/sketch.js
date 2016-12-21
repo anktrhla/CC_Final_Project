@@ -4,6 +4,12 @@
 //with higher fitness rates by a constant rate of mutation everytime and therefore better understanding the path the birds
 //have to take to reach their nest.
 
+//---References---
+//BIG THANKS TO DANIEL SHIFFMAN
+//The Nature of Code, Ch-9: The Evolution of Code (http://natureofcode.com/book/chapter-9-the-evolution-of-code/)
+//Daniel Shiffman's YouTube Playlist on Nature of Code, 9: Genetic Algorithms - The Nature of Code
+//(https://www.youtube.com/playlist?list=PLRqwX-V7Uu6bJM3VgzjNV5YxVxUwzALHV)
+
 //global variables
 var population;
 var lifespan = 500;
@@ -49,11 +55,14 @@ function draw() {
     population.selection();
     count = 0;
   }
-
+  //fill brown color in the rectangle
   fill(102, 65, 5);
+  //create rectangle
   rect(rx, ry, rw, rh);
   //initializing the nest where the birds have to reach; the target!
+  //set image's pivot point to the center
   imageMode(CENTER);
+  //call in the nest image
   image(nest, nestTarget.x, nestTarget.y, 50, 25);
 }
 
@@ -64,10 +73,13 @@ function draw() {
 //lifespan after lifespan.
 
 function Population() {
+  //create an empty birds array
   this.birds = [];
+  //set the population size for the birds to spawn
   this.popsize = 25;
+  //create an empty array for the mating pool
   this.matingpool = [];
-
+//initializing birds array for the population size of the birds
   for (var i = 0; i < this.popsize; i++) {
     this.birds[i] = new Bird();
   }
@@ -76,21 +88,26 @@ function Population() {
 //higher the fitness rate, higher the chances of that bird to make it to the nest.
 
   this.evaluate = function() {
-
+    
+//set initial value for the maximum fitness a progeny can achieve
     var maxfit = 0;
+    //for loop to calculate the fitness values of the progeny
     for (var i = 0; i < this.popsize; i++) {
       this.birds[i].calcFitness();
+      //the if statement stores the fitness value for each bird in the array as the new maximum fitness value
       if (this.birds[i].fitness > maxfit) {
         maxfit = this.birds[i].fitness;
       }
     }
+    //for loop that divides the fitness value of reach bird in the array by the maxfit value
     for (var i = 0; i < this.popsize; i++) {
       this.birds[i].fitness /= maxfit;
     }
-
+  //for loop to multiply the fitness value by 100 to make it relatable in percentages
     this.matingpool = [];
     for (var i = 0; i < this.popsize; i++) {
       var n = this.birds[i].fitness * 100;
+      //nested for loop to have the fitness values stored in the matinpool to be pushed up into the birds array
       for (var j = 0; j < n; j++) {
         this.matingpool.push(this.birds[i]);
       }
@@ -101,11 +118,19 @@ function Population() {
   //fitness rate values, and selects them to produce a new bird when a new generation is spawned
 
   this.selection = function() {
+    
+    //initiating a new birds empty array
     var newBirds = [];
+    
+    //for loop to determine which parents' dna information is taken and randomly crossed over to create the genes array for
+    //the progeny
     for (var i = 0; i < this.birds.length; i++) {
       var parentA = random(this.matingpool).dna;
       var parentB = random(this.matingpool).dna;
+      //crossover function crosses the genes from parent A with parent B by taking a random mid point in the genes array
       var child = parentA.crossover(parentB);
+      //using the mutation function to introduce a 1% mutation rate, so that the progeny can have some of its own information
+      //in the genes array
       child.mutation();
       newBirds[i] = new Bird(child);
     }
@@ -116,8 +141,9 @@ function Population() {
 
   this.run = function() {
     for (var i = 0; i < this.popsize; i++) {
-      this.birds[i].update();
-      this.birds[i].show();
+      this.birds[i].update(); //calling the update fucntion from the Birds class that apply the forces on the birds which make
+      //them move around the canvas
+      this.birds[i].show(); //calling the show fucntion from the Birds class to populate the birds
     }
   }
 }
@@ -125,15 +151,21 @@ function Population() {
 //---DNA CLASS---
 //this class takes the information stored in the genes array that
 //acts as a DNA strand, and on that basis, helps perform crossover
-//or mutation for the phenotypes to be produced
+//and mutation for the phenotypes to be produced
 
 function DNA(genes) {
   if (genes) {
-    this.genes = genes;
+    this.genes = genes; 
   } else {
-    this.genes = [];
+    this.genes = []; // setting up genes as an empty array
+    
+    //for loop that runs for the lifespan of the birds' population and creates a genes array with 2D vectors with a specfific 
+    //magnitude
     for (var i = 0; i < lifespan; i++) {
+      
+      //initiating a new 2D random vector in the genes array
       this.genes[i] = p5.Vector.random2D();
+      //setting the magnitude for the new vectors that were created in the genes array
       this.genes[i].setMag(maxforce);
     }
   }
@@ -142,8 +174,13 @@ function DNA(genes) {
 //the genes array is split from the mid point; which in turn is chosen randomly
 
   this.crossover = function(partner) {
+    //setting up a variiable newgenes as an empty array
     var newgenes = [];
+    //setting up a mid point in the genes' array length from where the genes can be picked up for the progeny
     var mid = floor(random(this.genes.length));
+    
+    //for loop to place the genes in either the current parent's genes array or in the partner B's genes array, on the basis of
+    //the randomised mid point
     for (var i = 0; i < this.genes.length; i++) {
       if (i > mid) {
         newgenes[i] = this.genes[i];
@@ -151,6 +188,7 @@ function DNA(genes) {
         newgenes[i] = partner.genes[i];
       }
     }
+    //get the newgenes value after performing the crossover
     return new DNA(newgenes);
   }
   
@@ -159,6 +197,8 @@ function DNA(genes) {
 
   this.mutation = function() {
     for (var i = 0; i < this.genes.length; i++) {
+      //if statement to get a 1% (0.01) rate for the genes and then store it in the genes array by creating a new 2D
+      //vector and setting up a specific magnitude
       if (random(1) < 0.01) {
         this.genes[i] = p5.Vector.random2D();
         this.genes[i].setMag(maxforce);
@@ -175,13 +215,14 @@ function DNA(genes) {
 //to allow them to be displayed in the sketch
 
 function Bird(dna) {
-  this.pos = createVector(width / 2, height);
-  this.vel = createVector();
-  this.acc = createVector();
-  this.reached = false;
-  this.dead = false;
+  this.pos = createVector(width / 2, height); //vector for the position of the birds
+  this.vel = createVector(); //vector for the velocity with which the birds will move
+  this.acc = createVector(); //vector for the acceleration the birds will have
+  this.reached = false; //boolean variable to determine whether the birds have reached the nest or not
+  this.dead = false; //boolean value to determine whether the birds are alive or dead
   
-  //If there is dna information already availabl in the array, then keep it, if not create a new instance of DNA
+  //If statement to determine there is dna information already available in the array, then keep it,
+  //if not create a new instance of DNA
 
   if (dna) {
     this.dna = dna;
@@ -200,12 +241,20 @@ function Bird(dna) {
 //decrease the fitness value.
 
   this.calcFitness = function() {
+    
+    //calculate the distance between the birds position and the nest's position
     var d = dist(this.pos.x, this.pos.y, nestTarget.x, nestTarget.y);
 
+    //set fitness to it's reciprocal by mapping the values to it's invert value
     this.fitness = map(d, 0, width, width, 0);
+    
+    //if the bird reaches the nest, increase the fitness value by multiplying it to 10
     if (this.reached) {
       this.fitness *= 10;
     }
+    
+    //if the bird dies by colliding with the obstacle or the boundaries of the canvas, decrease the fitness value by
+    //dividing it by 10
     if (this.dead) {
       this.fitness /= 10;
     }
@@ -214,9 +263,13 @@ function Bird(dna) {
 
   this.update = function() {
 
+//calculate the distance between the bird's position and the nest's position
     var d = dist(this.pos.x, this.pos.y, nestTarget.x, nestTarget.y);
     
   //placing IF statements for the birds to stop moving when they have reached the target
+  
+  //if the distance is less than 10 pixels, the bird has reached the nest, and copy the position of the bird in the
+  //position of the bird
     if (d < 10) {
       this.reached = true;
       this.pos = nestTarget.copy();
@@ -228,6 +281,9 @@ function Bird(dna) {
       this.dead = true;
     }
 
+
+//if statement to check collision with the boundaries of the canvas
+//if the bird reaches the width or the height, set the dead boolean variable to true
     if (this.pos.x > width || this.pos.x < 0) {
       this.dead = true;
     }
@@ -250,16 +306,15 @@ function Bird(dna) {
 
   this.show = function() {
     push();
-    noStroke();
-    fill(255, 150);
-    translate(this.pos.x, this.pos.y);
-    rotate(this.vel.heading());
-    imageMode(CENTER);
-    push();
-    rotate(20);
-    image(birdie, 0, 0, 30, 15);
-    pop();
+      noStroke();
+      fill(255, 150);
+      translate(this.pos.x, this.pos.y);
+      rotate(this.vel.heading());
+      imageMode(CENTER);
+        push();
+          rotate(20);
+          image(birdie, 0, 0, 30, 15);
+        pop();
     pop();
   }
-
 }
