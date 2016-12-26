@@ -15,3 +15,9 @@ The Nature of Code, Ch-9: The Evolution of Code (http://natureofcode.com/book/ch
 
 Daniel Shiffman's YouTube Playlist on Nature of Code, 9: Genetic Algorithms - The Nature of Code
 (https://www.youtube.com/playlist?list=PLRqwX-V7Uu6bJM3VgzjNV5YxVxUwzALHV)
+
+The song used is: Wicked Games by James Vincent McMorrow
+Disclaimer: I do not own the rights to the song. I also do not intend to sell the song in whole or in part.
+
+The Bird Chirp music
+Disclaimer: I do not own the rights to the song. I also do not intend to sell the song in whole or in part.
